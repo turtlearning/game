@@ -150,7 +150,7 @@
                     alert(`${order.name}는 베이스가 있습니다.`);
                 }
                 else if (!arraysEqual(playerSelection.syrup.sort(), order.syrup.sort())) {
-                    if(order.syrup.length === 0)
+                    if(order.syrup.length === 0 || order.syrup.length === 1)
                         alert(`${order.name}은 시럽이 안 들어갑니다.`);
                     else
                         alert(`${order.name}은 ${order.syrup.join(", ")} 시럽이 들어갑니다.`);
