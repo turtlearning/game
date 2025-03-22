@@ -240,7 +240,7 @@
         }
 
         function resetGame() {
-            playerSelection = { cup: null, temperature: null, syrup: [], shot: 1, liquid: null, topping: [] };
+            playerSelection = { cup: null, temperature: null, syrup: [], shot: 2, liquid: null, topping: null };
             order = drinks[Math.floor(Math.random() * drinks.length)];
             order.shot = Math.floor(Math.random() * 3) + 1;
             document.getElementById("order").innerText = `🧾 주문: ${order.name} (샷 ${order.shot}잔)`;
