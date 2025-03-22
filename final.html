@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>커피 제조 게임</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; }
+        .container { width: 50%; margin: auto; padding: 20px; }
+        .step { display: none; margin-top: 20px; }
+        .visible { display: block; }
+        .warning { color: red; font-weight: bold; }
+        button { padding: 10px 15px; margin: 5px; cursor: pointer; }
+        .selected { background-color: #4CAF50; color: white; }
+        #cupImage { width: 100px; height: 150px; margin: 20px auto; }
+    </style>
+</head>
+<body>
+
+    <h1>☕ 커피 제조 게임 ☕</h1>
+    <h3 id="order"></h3>
+    <img id="cupImage" src="컵.jpeg" alt="컵 이미지">
+
+    <div class="container">
+        <div id="step1" class="step visible">
+            <h2>컵 사이즈 선택</h2>
+            <button onclick="selectCup(12, this)">12oz</button>
+            <button onclick="selectCup(16, this)">16oz</button>
+            <button onclick="nextStep(1)">✔</button>
+        </div>
+
+        <div id="step2" class="step">
+            <h2>HOT / ICE 선택</h2>
+            <button onclick="selectTemperature('HOT', this)">HOT</button>
+            <button onclick="selectTemperature('ICE', this)">ICE</button>
+            <button onclick="nextStep(2)">✔</button>
+        </div>
+
+            <div id="step3" class="step">
+                <h2>물 / 우유 선택</h2>
+                <button onclick="selectLiquid('물', this)">물</button>
+                <button onclick="selectLiquid('우유', this)">우유</button>
+                <button onclick="selectLiquid(null, this)">선택 안 함</button>
+                <button onclick="nextStep(3)">✔</button>
+            </div>
+
+        <div id="step4" class="step">
+            <h2>시럽 선택</h2>
+            <button onclick="toggleSyrup('바닐라', this)">바닐라</button>
+            <button onclick="toggleSyrup('초콜릿', this)">초콜릿</button>
+            <button onclick="toggleSyrup('카라멜', this)">카라멜</button>
+            <button onclick="toggleSyrup('none', this)">선택 안 함</button>
+            <button onclick="nextStep(4)">✔</button>
+        </div>
+
+        <div id="step5" class="step">
+            <h2>샷 선택</h2>
+            <button onclick="adjustShot(-1)">-</button>
+            <span id="shotCount">2</span>
+            <button onclick="adjustShot(1)">+</button>
+            <button onclick="nextStep(5)">✔</button>
+        </div>
+
+        <div id="step6" class="step">
+            <h2>토핑 선택</h2>
+            <button onclick="toggleTopping('시나몬', this)">시나몬</button>
+            <button onclick="toggleTopping('카라멜', this)">카라멜</button>
+            <button onclick="toggleTopping(null, this)">선택 안 함</button>
+            <button onclick="nextStep(6)">✔</button>
+        </div>
+
+        <div id="finalStep" class="step">
+            <h2>✅ 제조 완료!</h2>
+            <p id="finalMessage"></p>
+            <button onclick="resetGame()">게임 초기화</button>
+        </div>
+    </div>
+
+    <script>
+        const drinks = [
+            { name: "에스프레소(HOT)", cup: 12, temperature: "HOT", syrup: ["none"], liquid: null, topping: null },
+            { name: "아메리카노(HOT)", cup: 12, temperature: "HOT", syrup: ["none"], liquid: "물", topping: null },
+            { name: "아메리카노(ICE)", cup: 16, temperature: "ICE", syrup: ["none"], liquid: "물", topping: null },
+            { name: "카페라떼(HOT)", cup: 12, temperature: "HOT", syrup: ["none"], liquid: "우유", topping: null },
+            { name: "카페라떼(ICE)", cup: 16, temperature: "ICE", syrup: ["none"], liquid: "우유", topping: null },
+            { name: "카푸치노(HOT)", cup: 12, temperature: "HOT", syrup: ["none"], liquid: "우유", topping: "시나몬" },
+            { name: "바닐라라떼(HOT)", cup: 12, temperature: "HOT", syrup: ["바닐라"], liquid: "우유", topping: null },
+            { name: "바닐라라떼(ICE)", cup: 16, temperature: "ICE", syrup: ["바닐라"], liquid: "우유", topping: null },
+            { name: "카페모카(HOT)", cup: 12, temperature: "HOT", syrup: ["초콜릿"], liquid: "우유", topping: null },
+            { name: "카페모카(ICE)", cup: 16, temperature: "ICE", syrup: ["초콜릿"], liquid: "우유", topping: null },
+            { name: "카라멜마끼아또(HOT)", cup: 12, temperature: "HOT", syrup: ["바닐라", "카라멜"], liquid: "우유", topping: "카라멜" },
+            { name: "카라멜마끼아또(ICE)", cup: 16, temperature: "ICE", syrup: ["바닐라", "카라멜"], liquid: "우유", topping: "카라멜" }
+        ];
+
+        let order = drinks[Math.floor(Math.random() * drinks.length)];
+        order.shot = Math.floor(Math.random() * 3) + 1;
+        document.getElementById("order").innerText = `🧾 주문: ${order.name} (샷 ${order.shot}잔)`;
+        let playerSelection = { cup: null, temperature: null, syrup: [], shot: 2, liquid: null, topping: null };
+
+        function nextStep(step) {
+            let correct = false;
+            
+            switch(step) {
+                case 1:
+                    correct = playerSelection.cup === order.cup;
+                    break;
+                case 2:
+                    correct = playerSelection.temperature === order.temperature;
+                    break;
+                case 3:
+                    correct = playerSelection.liquid === order.liquid;
+                    break;
+                case 4:
+                    correct = arraysEqual(playerSelection.syrup, order.syrup);
+                    break;
+                case 5:
+                    correct = playerSelection.shot === order.shot;
+                    break;
+                case 6:
+                    correct = playerSelection.topping === order.topping;
+                    break;
+            }
+
+            if (correct) {
+                document.getElementById(`step${step}`).classList.remove("visible");
+                if (step < 6) {
+                    document.getElementById(`step${step + 1}`).classList.add("visible");
+                } else {
+                    document.getElementById("finalStep").classList.add("visible");
+                }
+            } else {
+                if (playerSelection.cup === 12 && order.cup === 16) {
+                    alert("ICE 용기는 16oz 입니다.");
+                } else if (playerSelection.cup === 16 && order.cup === 12) {
+                    alert("HOT 용기는 12oz 입니다.");
+                }
+                else if (playerSelection.temperature != order.temperature) {
+                    alert("온도가 올바르지 않습니다.");
+                }                
+                else if (playerSelection.liquid === "물" && order.liquid === "우유") {
+                    alert(`${order.name}은 ${order.liquid}를 베이스로 만듭니다.`);
+                }
+                else if (playerSelection.liquid === "우유" && order.liquid === "물") {
+                    alert(`${order.name}은 ${order.liquid}을 베이스로 만듭니다.`);
+                }
+                else if (playerSelection.liquid !== null && order.name === "에스프레소(HOT)") {
+                    alert(`${order.name}는 베이스가 없습니다.`);
+                }
+                else if (playerSelection.liquid === null && order.name !== "에스프레소(HOT)") {
+                    alert(`${order.name}는 베이스가 있습니다.`);
+                }
+                else if (!arraysEqual(playerSelection.syrup.sort(), order.syrup.sort())) {
+                    if(order.syrup.length === 0)
+                        alert(`${order.name}은 시럽이 안 들어갑니다.`);
+                    else
+                        alert(`${order.name}은 ${order.syrup.join(", ")} 시럽이 들어갑니다.`);
+                }
+                else if (playerSelection.shot !=  order.shot) {
+                    alert(`주문 받은 샷의 개수 ${order.shot}와 다릅니다.`);
+                }
+                else if (order.topping === null && playerSelection.topping !== null) {
+                    alert(`${order.name}의 토핑은 없습니다.`);
+                }  
+                else if (playerSelection.topping !== order.topping) {
+                    alert(`${order.name}의 토핑은 ${order.topping}입니다.`);
+                }  
+                else alert("선택한 값이 주문과 일치하지 않습니다. 다시 확인해주세요.");
+            }
+        }
+
+        function arraysEqual(arr1, arr2) {
+            if (arr1.length !== arr2.length) return false;
+            for (let i = 0; i < arr1.length; i++) {
+                if (arr1[i] !== arr2[i]) return false;
+            }
+            return true;
+        }
+
+        function selectCup(size, button) {
+            playerSelection.cup = size;
+            highlightSelected(button);
+
+            updateCupImage(1);
+        }
+
+        function selectTemperature(temp, button) {
+            playerSelection.temperature = temp;
+            highlightSelected(button);
+
+            updateCupImage(2);          
+        }
+
+        function selectLiquid(liquid, button) {
+            playerSelection.liquid = liquid;
+            highlightSelected(button);
+
+            updateCupImage(3);          
+        }
+
+        function toggleSyrup(syrup, button) {
+            let index = playerSelection.syrup.indexOf(syrup);
+            if (index === -1) {
+                playerSelection.syrup.push(syrup);
+                button.classList.add("selected");
+            } else {
+                playerSelection.syrup.splice(index, 1);
+                button.classList.remove("selected");
+            }
+            playerSelection.syrup.sort();   
+        }
+
+        function toggleTopping(topping, button) {
+            playerSelection.topping = topping;
+            highlightSelected(button);
+
+            updateCupImage(5);
+        }
+
+        function adjustShot(change) {
+            let shotSpan = document.getElementById("shotCount");
+            let newShot = playerSelection.shot + change;
+            if (newShot >= 1 && newShot <= 3) {
+                playerSelection.shot = newShot;
+                shotSpan.innerText = newShot;
+            }
+
+            updateCupImage(4);                      
+        }
+
+        function highlightSelected(button) {
+            let buttons = button.parentElement.querySelectorAll("button");
+            buttons.forEach(btn => btn.classList.remove("selected"));
+            button.classList.add("selected");
+        }
+
+        function updateCupImage(step) {
+            let cupImage = document.getElementById("cupImage");
+                if (step === 0) {
+                    cupImage.src = "컵.jpeg";
+                }    
+                else if (step === 1) {
+                    if (playerSelection.cup === 12) {
+                        cupImage.src = "12oz.png";
+                    } else if (playerSelection.cup === 16) {
+                        cupImage.src = "16oz.png";
+                    }
+                }
+                else if (step === 2) {
+                    if (playerSelection.temperature === "HOT") {
+                        cupImage.src = "12oz.png";
+                    } else if (playerSelection.temperature === "ICE") {
+                        cupImage.src = "얼음컵.png";
+                    }
+                }
+                else if (step === 3) {
+                    if (playerSelection.temperature === "HOT" && playerSelection.liquid === "물") {
+                        cupImage.src = "뜨신물.png";
+                    } else if (playerSelection.temperature === "HOT" && playerSelection.liquid === "우유") {
+                        cupImage.src = "뜨신우유.png";
+                    } else if (playerSelection.temperature === "ICE" && playerSelection.liquid === "물") {
+                        cupImage.src = "얼음물.png";
+                    } else if (playerSelection.temperature === "ICE" && playerSelection.liquid === "우유") {
+                        cupImage.src = "얼음우유.png";
+                    }
+                }                
+                else if (step === 4) {
+                    if (playerSelection.temperature === "HOT" && playerSelection.liquid === "물") {
+                        cupImage.src = "뜨아.png";
+                    } else if (playerSelection.temperature === "HOT" && playerSelection.liquid === "우유") {
+                        cupImage.src = "핫 라떼.png";
+                    } else if (playerSelection.temperature === "ICE" && playerSelection.liquid === "물") {
+                        cupImage.src = "아아.png";
+                    } else if (playerSelection.temperature === "ICE" && playerSelection.liquid === "우유") {
+                        cupImage.src = "라떼 아이스.png";
+                    }
+                }
+                else if (step === 5) {
+                    if (order.name === "카푸치노(HOT)") {
+                        cupImage.src = "카푸치노.png";
+                    } else if (order.name === "카라멜마끼아또(ICE)") {
+                        cupImage.src = "카라멜 아이스.png";
+                    } else if (order.name === "카라멜마끼아또(HOT)") {
+                        cupImage.src = "카라멜 핫.png";
+                    }
+                }
+            }
+
+        function resetGame() {
+            playerSelection = { cup: null, temperature: null, syrup: [], shot: 1, liquid: null, topping: [] };
+            order = drinks[Math.floor(Math.random() * drinks.length)];
+            order.shot = Math.floor(Math.random() * 3) + 1;
+            document.getElementById("order").innerText = `🧾 주문: ${order.name} (샷 ${order.shot}잔)`;
+
+            let allButtons = document.querySelectorAll("button");
+                allButtons.forEach((button) => {
+                    button.classList.remove("selected");
+                });
+
+            document.getElementById("finalStep").classList.remove("visible");
+            document.getElementById("step1").classList.add("visible");
+            updateCupImage(0);
+        }
+    </script>
+
+</body>
+</html>
